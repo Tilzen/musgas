@@ -1,0 +1,13 @@
+name: musgas
+version: 0.1.0
+
+authors:
+  - Tilzen <lucas.nascimentoR@hotmail.com>
+
+targets:
+  musgas:
+    main: src/musgas.cr
+
+crystal: 1.7.2
+
+license: MIT
