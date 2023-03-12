@@ -1,6 +1,7 @@
 require "csv"
 require "uuid"
 require "option_parser"
+require "shellwords"
 
 module Musgas
   def self.read_csv(file : String) : Array(Hash(String, String))
@@ -26,43 +27,48 @@ module Musgas
   end
 
   def self.download_videos(videos : Array(Hash(String, String))) : Array(Hash(String, String))
-    processes = [] of Fiber
     files = [] of Hash(String, String)
+    channel = Channel(Hash(String, String)).new
 
     videos.each do |video|
-      processes << spawn do
-        filename = (
-          "/tmp/#{video["name"].downcase.gsub(/\s+/, "-")}-#{UUID.random.to_s[0..7]}"
-        )
+      filename = "/tmp/#{video["name"].downcase.gsub(/\s+/, "-")}-#{UUID.random.to_s[0..7]}"
+      files << {
+        "video" => "#{filename}.webm",
+        "start" => video["start"],
+        "end" => video["end"]
+      }
 
-        files << {
+      spawn do
+        download_video(video["url"], filename)
+        channel.send({
           "video" => "#{filename}.webm",
           "start" => video["start"],
           "end" => video["end"]
-        }
-
-        download_video(video["url"], filename)
+        })
       end
     end
 
-    processes.each(&.resume)
+    videos.size.times do
+      files << channel.receive
+    end
 
     files
   end
 
   def self.convert_to_music(video : String) : String?
+    puts "Converting video #{video} to music."
+
     output_file = video.sub(/\.webm$/, ".mp3")
-    command = "ffmpeg -i #{video.shellescape} -vn -ar 44100 -ac 2 -ab 192k -f mp3 #{output_file.shellescape}"
+    command = "ffmpeg -y -hide_banner -loglevel error -i #{video.shellescape} -vn -ar 44100 -ac 2 -ab 192k -f mp3 #{output_file.shellescape}"
     system(command)
 
-    if File.exists?(output_file)
-      return output_file
-    else
-      return nil
-    end
+    return output_file if File.exists?(output_file)
+    return nil
   end
 
   def self.convert_videos_to_music(files : Array(Hash(String, String))) : Array(Hash(String, String?))
+    puts "Converting videos to music."
+
     musics_converted = [] of Hash(String, String?)
 
     files.each do |file|
@@ -77,19 +83,22 @@ module Musgas
   end
 
   def self.cut_music(music : String?, start_time : String?, end_time : String?) : String?
-    if music.nil?
-      return nil
-    end
+    return nil if music.nil?
+
+    puts "Cutting #{music} between times #{start_time} and #{end_time}."
 
     input_file = music.shellescape
+    music = music.sub(/\/tmp\//, "")
     output_file = "~/musgas/#{music.shellescape}"
-    command = "ffmpeg -i #{input_file} -ss #{start_time} -to #{end_time} -c copy #{output_file}"
+    command = "ffmpeg -y -hide_banner -loglevel error -i #{input_file} -ss #{start_time} -to #{end_time} -c copy #{output_file}"
     system(command)
 
     output_file
   end
 
   def self.cut_musics(musics_to_cut : Array(Hash(String, String?))) : Array(String?)
+    puts "Cutting musics."
+
     musics = [] of String?
 
     musics_to_cut.each do |music_to_cut|
