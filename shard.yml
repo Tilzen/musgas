@@ -8,6 +8,10 @@ targets:
   musgas:
     main: src/musgas.cr
 
+dependencies:
+  shellwords:
+    github: szTheory/shellwords-crystal
+
 crystal: 1.7.2
 
 license: MIT
