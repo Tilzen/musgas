@@ -1,27 +1,4 @@
 # musgas
+A program for downloading music.
 
-TODO: Write a description here
-
-## Installation
-
-TODO: Write installation instructions here
-
-## Usage
-
-TODO: Write usage instructions here
-
-## Development
-
-TODO: Write development instructions here
-
-## Contributing
-
-1. Fork it (<https://github.com/your-github-user/musgas/fork>)
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create a new Pull Request
-
-## Contributors
-
-- [Tilzen](https://github.com/your-github-user) - creator and maintainer
+Musgas uses a CSV file with the video url, name, start and end times to download the video, convert to mp3, and cut at the specified times.

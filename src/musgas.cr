@@ -1,7 +1,6 @@
 require "csv"
 require "uuid"
 require "option_parser"
-require "shellwords"
 
 module Musgas
   def self.read_csv(file : String) : Array(Hash(String, String))
